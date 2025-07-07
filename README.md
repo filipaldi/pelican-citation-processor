@@ -60,4 +60,8 @@ This project is licensed under the MIT License - see the [LICENSE](pelican-citat
 
 - [Pelican](https://blog.getpelican.com/) - The static site generator
 - [Pandoc](https://pandoc.org/) - The universal document converter
+<<<<<<< HEAD
 - [Zotero](https://www.zotero.org/) - For citation styles and bibliography management
+=======
+- [Zotero](https://www.zotero.org/) - For citation styles and bibliography management
+>>>>>>> 8e1698d (Improve root README and add .gitignore for assignment file)
