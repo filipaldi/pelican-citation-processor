@@ -50,7 +50,7 @@ Documentation = "https://github.com/pelican-plugins/pelican-citation-processor#r
 "Bug Tracker" = "https://github.com/pelican-plugins/pelican-citation-processor/issues"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
 include = ["pelican*"]
 
 [tool.black]
