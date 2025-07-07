@@ -28,7 +28,7 @@ CATEGORY_FEED_ATOM = 'feeds/%s.atom.xml'
 
 # Social widget
 SOCIAL = (
-    ('GitHub', 'https://github.com/yourusername'),
+    ('GitHub', 'https://github.com/pelican-plugins'),
 )
 
 DEFAULT_PAGINATION = 10
