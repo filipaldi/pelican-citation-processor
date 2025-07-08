@@ -65,3 +65,4 @@ docs/_build/
 # Pelican
 output/
 cache/ 
+/assignment.md
