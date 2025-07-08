@@ -45,6 +45,10 @@ pip install pelican-citation-processor
 
 ## Configuration
 
+The plugin supports both global and local citation configuration. Local settings in individual articles override global settings.
+
+### Global Configuration
+
 Add the plugin to your `pelicanconf.py`:
 
 ```python
@@ -57,10 +61,28 @@ CITATION_STYLE = '_bib_styles/cambridge-university-press-author-date-cambridge-a
 BIBLIOGRAPHY_FILE = '_bibliography.bib'
 ```
 
+### Local Configuration
+
+You can override global settings for individual articles by adding metadata to the article's frontmatter:
+
+```markdown
+Title: My Article
+Date: 2024-01-15
+citation_style: _bib_styles/ieee.csl
+bibliography_file: _local_bibliography.bib
+
+# Article content...
+```
+
 ### Configuration Options
 
+**Global Settings (in `pelicanconf.py`):**
 - `CITATION_STYLE`: Path to your CSL file (required)
 - `BIBLIOGRAPHY_FILE`: Path to your global bibliography file (default: `_bibliography.bib`)
+
+**Local Settings (in article metadata):**
+- `citation_style`: Path to article-specific CSL file (overrides global)
+- `bibliography_file`: Path to article-specific bibliography file (overrides global)
 
 ## Usage
 
@@ -99,6 +121,8 @@ curl -o _bib_styles/cambridge-university-press-author-date-cambridge-a.csl \
 
 Use the `[@citation_key]` format in your Markdown articles:
 
+#### Global Configuration (Default)
+
 ```markdown
 # My Research Article
 
@@ -108,6 +132,25 @@ The attention mechanism introduced by Vaswani et al. [@Attention2017] has been p
 ## References
 
 The references will be automatically generated here.
+```
+
+#### Local Configuration
+
+For articles that need different citation styles or bibliography files:
+
+```markdown
+Title: My Specialized Article
+Date: 2024-01-15
+citation_style: _bib_styles/ieee.csl
+bibliography_file: _specialized_bibliography.bib
+
+# My Specialized Article
+
+This article uses IEEE citation style and a specialized bibliography [@SpecializedRef2024].
+
+## References
+
+The references will be generated using the local IEEE style.
 ```
 
 ### 4. Generate Your Site
@@ -120,10 +163,17 @@ The plugin will automatically process citations and generate reference lists for
 
 ## How It Works
 
-1. **Content Processing**: The plugin hooks into Pelican's `article_generator_write_article` signal
-2. **HTML Extraction**: Extracts the HTML content from each article
-3. **Pandoc Processing**: Calls Pandoc with citeproc to process citations
-4. **Content Replacement**: Replaces the article content with the processed version
+1. **Configuration Resolution**: The plugin resolves citation settings by checking local article metadata first, then falling back to global settings
+2. **Content Processing**: The plugin hooks into Pelican's `article_generator_write_article` signal
+3. **HTML Extraction**: Extracts the HTML content from each article
+4. **Pandoc Processing**: Calls Pandoc with citeproc to process citations using the resolved configuration
+5. **Content Replacement**: Replaces the article content with the processed version
+
+### Configuration Resolution Order
+
+1. **Local Settings**: Check article metadata for `citation_style` and `bibliography_file`
+2. **Global Settings**: Fall back to global settings from `pelicanconf.py`
+3. **Defaults**: Use default values if neither local nor global settings are provided
 
 ## Citation Format
 
