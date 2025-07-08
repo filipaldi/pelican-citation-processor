@@ -2,7 +2,6 @@ import os
 import subprocess
 import tempfile
 from pelican import signals
-from pelican.generators import ArticlesGenerator
 
 
 def resolve_citation_config(article_generator, content):
@@ -39,14 +38,14 @@ def resolve_file_path(base_path, file_path, settings):
 
 
 def process_citations(article_generator, content):
-    if not hasattr(content, '_content'):
+    if not hasattr(content, '_content') or content._content is None:
         return
     
     settings = article_generator.settings
-    config = resolve_citation_config(article_generator, content)
+    citation_config = resolve_citation_config(article_generator, content)
     
-    citation_style = config['citation_style']
-    bibliography_file = config['bibliography_file']
+    citation_style = citation_config['citation_style']
+    bibliography_file = citation_config['bibliography_file']
     
     if not citation_style or not bibliography_file:
         return
@@ -56,16 +55,27 @@ def process_citations(article_generator, content):
     citation_style_path = resolve_file_path(base_path, citation_style, settings)
     
     if not os.path.exists(bibliography_path):
-        print(f"Bibliography file not found: {bibliography_path}")
+        if getattr(settings, 'DEBUG', False):
+            print(f"Bibliography file not found: {bibliography_path}")
         return
     
     if not os.path.exists(citation_style_path):
-        print(f"Citation style file not found: {citation_style_path}")
+        if getattr(settings, 'DEBUG', False):
+            print(f"Citation style file not found: {citation_style_path}")
+        return
+    
+    source_path = getattr(content, 'source_path', None)
+    if not source_path or not os.path.exists(source_path):
+        if getattr(settings, 'DEBUG', False):
+            print(f"Source file not found: {source_path}")
         return
     
     try:
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as temp_input:
-            temp_input.write(content._content)
+        with open(source_path, 'r') as f:
+            original_content = f.read()
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as temp_input:
+            temp_input.write(original_content)
             temp_input_path = temp_input.name
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as temp_output:
@@ -73,7 +83,7 @@ def process_citations(article_generator, content):
         
         pandoc_cmd = [
             'pandoc',
-            '--from', 'html',
+            '--from', 'markdown',
             '--to', 'html5',
             '--citeproc',
             '--csl', citation_style_path,
@@ -81,6 +91,9 @@ def process_citations(article_generator, content):
             '--output', temp_output_path,
             temp_input_path
         ]
+        
+        if getattr(settings, 'DEBUG', False):
+            print(f"Processing citations with command: {' '.join(pandoc_cmd)}")
         
         result = subprocess.run(
             pandoc_cmd,
@@ -94,11 +107,16 @@ def process_citations(article_generator, content):
         
         content._content = processed_content
         
+        if getattr(settings, 'DEBUG', False):
+            print(f"Successfully processed citations for {source_path}")
+        
     except subprocess.CalledProcessError as e:
-        print(f"Pandoc citation processing failed: {e}")
-        print(f"Pandoc stderr: {e.stderr}")
+        if getattr(settings, 'DEBUG', False):
+            print(f"Pandoc citation processing failed: {e}")
+            print(f"Pandoc stderr: {e.stderr}")
     except Exception as e:
-        print(f"Citation processing error: {e}")
+        if getattr(settings, 'DEBUG', False):
+            print(f"Citation processing error: {e}")
     finally:
         if 'temp_input_path' in locals():
             try:

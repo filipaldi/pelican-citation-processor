@@ -1,18 +1,14 @@
 # Pelican Citation Processor
 
-A Pelican plugin that processes citations using Pandoc with a global bibliography file, bypassing the limitations of the existing Pandoc Reader plugin.
-
-## Problem
-
-The [Pandoc Reader plugin](https://github.com/pelican-plugins/pandoc-reader) requires each article to have its own bibliography file (e.g., `my-post.md` needs `my-post.bib`). This plugin provides a global bibliography file approach.
+A Pelican plugin that processes citations in Markdown content using Pandoc, supporting global and local bibliography and CSL files.
 
 ## Features
 
-- Uses Pelican's default Markdown reader
-- Processes citations using Pandoc's citeproc functionality
-- Supports global bibliography file for all articles
-- Configurable citation styles (CSL files)
-- Seamless integration with existing Pelican workflow
+- Processes citations from original Markdown source files before HTML conversion
+- Supports global and local bibliography and CSL (citation style) files
+- Citations in Markdown format ([@citation-key]) are properly formatted in the output
+- Uses Pelican's default Markdown reader and integrates with the standard workflow
+- Clean implementation and test suite, free of comments/docstrings
 
 ## Installation
 
@@ -21,6 +17,7 @@ The [Pandoc Reader plugin](https://github.com/pelican-plugins/pandoc-reader) req
 - Python 3.8 or higher
 - Pelican 4.0 or higher
 - Pandoc with citeproc support
+- Python-Markdown (for Pelican to process Markdown)
 
 ### Install Pandoc
 
@@ -45,44 +42,29 @@ pip install pelican-citation-processor
 
 ## Configuration
 
-The plugin supports both global and local citation configuration. Local settings in individual articles override global settings.
-
-### Global Configuration
-
 Add the plugin to your `pelicanconf.py`:
 
 ```python
 PLUGINS = ['citation_processor']
-
-# Required: Path to your CSL (Citation Style Language) file
 CITATION_STYLE = '_bib_styles/cambridge-university-press-author-date-cambridge-a.csl'
-
-# Required: Path to your global bibliography file
 BIBLIOGRAPHY_FILE = '_bibliography.bib'
 ```
 
-### Local Configuration
-
-You can override global settings for individual articles by adding metadata to the article's frontmatter:
+You can override these settings in individual articles using metadata:
 
 ```markdown
 Title: My Article
 Date: 2024-01-15
 citation_style: _bib_styles/ieee.csl
 bibliography_file: _local_bibliography.bib
-
-# Article content...
 ```
 
 ### Configuration Options
 
-**Global Settings (in `pelicanconf.py`):**
 - `CITATION_STYLE`: Path to your CSL file (required)
 - `BIBLIOGRAPHY_FILE`: Path to your global bibliography file (default: `_bibliography.bib`)
-
-**Local Settings (in article metadata):**
-- `citation_style`: Path to article-specific CSL file (overrides global)
-- `bibliography_file`: Path to article-specific bibliography file (overrides global)
+- `citation_style` (article metadata): Path to article-specific CSL file (overrides global)
+- `bibliography_file` (article metadata): Path to article-specific bibliography file (overrides global)
 
 ## Usage
 
@@ -97,19 +79,11 @@ Create a global bibliography file (e.g., `_bibliography.bib`) in your content di
   year={2016},
   publisher={MIT Press}
 }
-
-@article{Attention2017,
-  title={Attention is All You Need},
-  author={Ashish Vaswani and others},
-  journal={Advances in Neural Information Processing Systems},
-  volume={30},
-  year={2017}
-}
 ```
 
 ### 2. Download a CSL File
 
-Download a citation style from the [Zotero Style Repository](https://www.zotero.org/styles/). For example:
+Download a citation style from the [Zotero Style Repository](https://www.zotero.org/styles/):
 
 ```bash
 mkdir -p _bib_styles
@@ -121,36 +95,14 @@ curl -o _bib_styles/cambridge-university-press-author-date-cambridge-a.csl \
 
 Use the `[@citation_key]` format in your Markdown articles:
 
-#### Global Configuration (Default)
-
 ```markdown
 # My Research Article
 
-Recent advances in deep learning have revolutionized machine learning [@DeepLearning2016]. 
-The attention mechanism introduced by Vaswani et al. [@Attention2017] has been particularly influential.
+Recent advances in deep learning have revolutionized machine learning [@DeepLearning2016].
 
 ## References
 
 The references will be automatically generated here.
-```
-
-#### Local Configuration
-
-For articles that need different citation styles or bibliography files:
-
-```markdown
-Title: My Specialized Article
-Date: 2024-01-15
-citation_style: _bib_styles/ieee.csl
-bibliography_file: _specialized_bibliography.bib
-
-# My Specialized Article
-
-This article uses IEEE citation style and a specialized bibliography [@SpecializedRef2024].
-
-## References
-
-The references will be generated using the local IEEE style.
 ```
 
 ### 4. Generate Your Site
@@ -159,73 +111,36 @@ The references will be generated using the local IEEE style.
 pelican content
 ```
 
-The plugin will automatically process citations and generate reference lists for each article.
+The plugin will process citations and generate reference lists for each article.
 
 ## How It Works
 
-1. **Configuration Resolution**: The plugin resolves citation settings by checking local article metadata first, then falling back to global settings
-2. **Content Processing**: The plugin hooks into Pelican's `article_generator_write_article` signal
-3. **HTML Extraction**: Extracts the HTML content from each article
-4. **Pandoc Processing**: Calls Pandoc with citeproc to process citations using the resolved configuration
-5. **Content Replacement**: Replaces the article content with the processed version
-
-### Configuration Resolution Order
-
-1. **Local Settings**: Check article metadata for `citation_style` and `bibliography_file`
-2. **Global Settings**: Fall back to global settings from `pelicanconf.py`
-3. **Defaults**: Use default values if neither local nor global settings are provided
-
-## Citation Format
-
-The plugin processes citations in the format `[@citation_key]` where `citation_key` matches entries in your bibliography file.
+- Hooks into Pelican's `article_generator_write_article` signal
+- Reads the original Markdown source file for each article
+- Runs Pandoc with citeproc, CSL, and bibliography file to generate HTML with formatted citations
+- Replaces the article content with the processed HTML
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Pandoc not found**: Ensure Pandoc is installed and available in your PATH
-2. **Bibliography file not found**: Check that `BIBLIOGRAPHY_FILE` points to an existing file
-3. **CSL file not found**: Verify that `CITATION_STYLE` points to a valid CSL file
-4. **Citations not processed**: Check that citation keys match entries in your bibliography file
-
-### Debug Mode
-
-Enable debug output in your Pelican settings:
-
-```python
-DEBUG = True
-```
+- **Pandoc not found**: Ensure Pandoc is installed and available in your PATH
+- **Bibliography file not found**: Check that `BIBLIOGRAPHY_FILE` points to an existing file
+- **CSL file not found**: Verify that `CITATION_STYLE` points to a valid CSL file
+- **Citations not processed**: Check that citation keys match entries in your bibliography file
+- **Markdown not processed**: Ensure the `markdown` Python package is installed
 
 ## Development
 
-### Setup Development Environment
-
-```bash
-git clone https://github.com/pelican-plugins/pelican-citation-processor.git
-cd pelican-citation-processor
-pip install -e ".[dev]"
-```
-
-### Run Tests
+- Clean codebase, no comments or docstrings
+- Tests for Markdown citation processing, file path resolution, and error handling
+- Run tests with:
 
 ```bash
 pytest
 ```
 
-### Code Formatting
-
-```bash
-black pelican/plugins/citation_processor/
-flake8 pelican/plugins/citation_processor/
-```
-
-## Contributing
-
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License
 
 ## Acknowledgments
 

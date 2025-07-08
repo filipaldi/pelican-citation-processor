@@ -8,22 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial plugin implementation
-- Support for global bibliography files
-- Pandoc citeproc integration
-- Configurable citation styles (CSL files)
-- Comprehensive test suite
-- Documentation and examples
+- Support for processing citations directly from Markdown source files before HTML conversion
+- Citations in Markdown format ([@citation-key]) are now properly formatted in the output
+- Global and local bibliography and CSL file support
+- Clean implementation and test suite, free of comments/docstrings
 
 ### Features
 - Hooks into Pelican's `article_generator_write_article` signal
-- Processes citations in the format `[@citation_key]`
-- Automatic reference list generation
-- Error handling and graceful degradation
+- Reads the original Markdown file for each article
+- Runs Pandoc with citeproc, CSL, and bibliography file to generate HTML with formatted citations
+- Replaces the article content with the processed HTML
+- Error handling and debug logging
 - Temporary file cleanup
 
 ### Technical Details
 - Uses Pelican's default Markdown reader
 - Calls Pandoc subprocess for citation processing
-- Supports HTML input/output format
+- Supports Markdown input/output format
 - Configurable via Pelican settings 
